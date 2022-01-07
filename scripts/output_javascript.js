@@ -33,59 +33,60 @@ function bad_chars_in_file_name(type_name) {
 }
 
 
-let json_file = process.argv[2]
-console.log("ARGS",json_file)
-
-let ext = path.extname(json_file)
-if ( ext !== '.json' ) {
-    console.log(`${json_file} does not have extentions '.json'`)
-    console.log("exiting")
-    process.exit(-1)
-}
-
-let target_runner = 'node'
-
-let alt_target = process.argv[3]
-if ( alt_target !== undefined ) {
-    if ( targets_OK.indexOf(alt_target) ) {
-        target_runner = alt_target
+function output_file(json_file,target) {
+    //
+    console.log("ARGS",json_file)
+    //
+    let ext = path.extname(json_file)
+    if ( ext !== '.json' ) {
+        console.log(`${json_file} does not have extentions '.json'`)
+        console.log("exiting")
+        process.exit(-1)
     }
-}
-console.log("output file for system: " + target_runner)
-
-let data = fs.readFileSync(json_file).toString()
-
-let def = JSON.parse(data)
-
-let def_lines = ""
-let type_name = def.typename
-if ( type_name === undefined || type_name.length < 2 || bad_chars_in_file_name(type_name) ) {
-    console.log("typename is not correct")
-    if ( type_name === undefined ) {
-        console.log("typename is undefined")
-    } else {
-        console.log(`typename ${type_name}`)
+    
+    let target_runner = 'node'
+    
+    let alt_target = target
+    if ( alt_target !== undefined ) {
+        if ( targets_OK.indexOf(alt_target) ) {
+            target_runner = alt_target
+        }
     }
-    console.log("exiting...")
-    process.exit(-1)
-}
-//
-if ( def.fields ) {
+    console.log("output file for system: " + target_runner)
+    
+    let data = fs.readFileSync(json_file).toString()
+    
+    let def = JSON.parse(data)
+    
+    let def_lines = ""
+    let type_name = def.typename
+    if ( type_name === undefined || type_name.length < 2 || bad_chars_in_file_name(type_name) ) {
+        console.log("typename is not correct")
+        if ( type_name === undefined ) {
+            console.log("typename is undefined")
+        } else {
+            console.log(`typename ${type_name}`)
+        }
+        console.log("exiting...")
+        process.exit(-1)
+    }
     //
-    type_name = capitalizeFirstLetter(type_name)
-    //
-    let fields_array = Object.keys(def.fields)
-    let field_inits = fields_array.map(fld => {
-        let initializer = init_of_field(def.fields[fld])
-        return `this.${fld} = ${initializer}`
-    })
-    let fields = field_inits.join('\n\t\t')
-    //
-    let exporter = `module.exports.${type_name} = ${type_name}`
-
-    //
-    if ( (def.role === "base") && (def.inherit === "none") ) {
-        def_lines = 
+    if ( def.fields ) {
+        //
+        type_name = capitalizeFirstLetter(type_name)
+        //
+        let fields_array = Object.keys(def.fields)
+        let field_inits = fields_array.map(fld => {
+            let initializer = init_of_field(def.fields[fld])
+            return `this.${fld} = ${initializer}`
+        })
+        let fields = field_inits.join('\n\t\t')
+        //
+        let exporter = `module.exports.${type_name} = ${type_name}`
+    
+        //
+        if ( (def.role === "base") && (def.inherit === "none") ) {
+            def_lines = 
 `class ${type_name} {
     constructor() {
         ${fields}
@@ -93,17 +94,17 @@ if ( def.fields ) {
 }
 ${exporter}
 `
-    } else {
-        let inherit_class = capitalizeFirstLetter(def.inherit)
-        //
-        let importer = `const ${inherit_class} = require('${def.inherit}')`
-        if ( target_runner !== 'node' ) {
-            importer = "other guy"
-        }
-
-        let exporter = `module.exports.${type_name} = ${type_name}`
-
-        def_lines = 
+        } else {
+            let inherit_class = capitalizeFirstLetter(def.inherit)
+            //
+            let importer = `const ${inherit_class} = require('${def.inherit}')`
+            if ( target_runner !== 'node' ) {
+                importer = "other guy"
+            }
+    
+            let exporter = `module.exports.${type_name} = ${type_name}`
+    
+            def_lines = 
 `
 ${importer}
 //
@@ -116,11 +117,14 @@ class ${type_name} extends ${inherit_class} {
 //
 ${exporter}
 `
-    //
+        //
+        }
     }
+
+    fs.writeFileSync(def.typename + '.js',def_lines)
+    
 }
 
-// 
-console.log("--------------------------------")
 
-fs.writeFileSync(def.typename + '.js',def_lines)
+
+module.exports.output_file = output_file

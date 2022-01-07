@@ -1,0 +1,36 @@
+{
+  "name": "dfon2json",
+  "version": "0.1.0",
+  "description": "A command line tool for translating DFON type definitions to JSON and then to other languages",
+  "main": "index.js",
+  "scripts": {
+    "test": "node tests/index.js"
+  },
+  "bin": {
+    "dfon2l": "./bin/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/copious-world/dfon2json.git"
+  },
+  "keywords": [
+    "abstract",
+    "type",
+    "definition",
+    "DFON",
+    "JSON",
+    "transpile"
+  ],
+  "author": "R. Leddy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/copious-world/dfon2json/issues"
+  },
+  "homepage": "https://github.com/copious-world/dfon2json#readme",
+  "dependencies": {
+    "@vitalets/google-translate-api": "^7.0.0",
+    "boxen": "^6.2.1",
+    "chalk": "^4.1.2",
+    "yargs": "^17.3.1"
+  }
+}
