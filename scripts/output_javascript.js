@@ -34,7 +34,7 @@ function bad_chars_in_file_name(type_name) {
 
 
 
-function node_style_output(type_name,fields,setters_getters,def) {
+function node_style_output(type_name,fields,setters_getters,checker_setup,def) {
     let exporter = `module.exports.${type_name} = ${type_name}`
     //
     let def_lines = ""
@@ -43,7 +43,10 @@ function node_style_output(type_name,fields,setters_getters,def) {
         def_lines = 
 `class ${type_name} {
     constructor() {
+        this._checkers = {}
         ${fields}
+        //
+${checker_setup}
     }
     //
     ${setters_getters}
@@ -64,10 +67,11 @@ class ${type_name} extends ${inherit_class} {
     constructor() {
         super()
         ${fields}
+        //
+${checker_setup}
     }
     //
     ${setters_getters}
-
 }
 //
 ${exporter}
@@ -79,13 +83,16 @@ ${exporter}
 }           
 
 
-function module_style_output(type_name,fields,setters_getters,def) {
+function module_style_output(type_name,fields,setters_getters,checker_setup,def) {
     let def_lines = ""
     if ( (def.role === "base") && (def.inherit === "none") ) {
         def_lines = 
 `export class ${type_name} {
     constructor() {
+        this._checkers = {}
         ${fields}
+        //
+        ${checker_setup}
     }
     //
     ${setters_getters}
@@ -105,6 +112,8 @@ export class ${type_name} extends ${inherit_class} {
     constructor() {
         super()
         ${fields}
+        //
+        ${checker_setup}
     }
     //
     ${setters_getters}
@@ -151,6 +160,50 @@ function struct_membership_funs(fname,tspec_array) {
     }
 `
     return input
+}
+
+
+function build_all_fields_setter(fields,def) {
+    //
+    let field_list_list = Object.keys(fields)
+    let field_list = field_list_list.join(",")
+    let field_sets_list = field_list_list.map(fld => {
+        let checker = `\t\tif ( this.type_check('${fld}',fld) ) { `
+        let setter = `this._${fld} = ${fld} }`
+        return (checker + setter)
+    })
+
+    let field_sets = field_sets_list.join('\n')
+    //
+    let parameter_method = `
+    set_all(${field_list}) {
+${field_sets}
+    }
+`
+    return parameter_method
+}
+
+function build_from_map_setter(fields,def) {
+
+    let map_method = `
+    type_check(key,value) {
+        let truthy_check = this._checkers[key]
+        return truthy_check(value)
+    }
+    //
+    set_from_map(map_obj) {
+        for ( let mky in map_obj ) {
+            let ky = '_' + mky
+            if ( ky in this._checkers ) {
+                let value = map_obj[ky]
+                if ( this.type_check(mky,value) ) {
+                    self[ky] = value
+                }
+            }
+        }
+    }
+`
+    return map_method
 }
 
 
@@ -209,8 +262,12 @@ function output_file(json_file,target) {
         //
 
         let setters_getters = ""
+        let checker_setup = ""
         let setter_getter_list = []
+        let checker_setup_list = []
+        //
         for ( let fname in def.fields ) {
+            //
             let type_spec = def.fields[fname]
             let backup_type_spec = false
             if ( typeof type_spec !== 'string' ) {
@@ -222,6 +279,11 @@ function output_file(json_file,target) {
                     type_spec = JSON.stringify(type_spec) // for now
                 }
             }
+
+            let type_check_function = "(val) => { return true }"
+            let type_check_map_line = `\t\tthis._checkers["${fname}"] = ${type_check_function}`  // put in the type checking code
+            //
+            checker_setup_list.push(type_check_map_line)
 
             let sg = `
     set ${fname}(val) {
@@ -235,6 +297,7 @@ function output_file(json_file,target) {
     }
 `
 
+
             if ( backup_type_spec  && (typeof backup_type_spec !== 'string') ) {
                 if ( Array.isArray(backup_type_spec) ) {
                     sg += "\n" + array_membership_funs(fname,backup_type_spec)
@@ -243,18 +306,26 @@ function output_file(json_file,target) {
                 }
             }
             setter_getter_list.push(sg)
+            
 
         }
 
-        setters_getters = setter_getter_list.join("\n") 
+        checker_setup = checker_setup_list.join("\n")
+
+        let set_all_method = build_all_fields_setter(def.fields,def)
+        setter_getter_list.unshift(set_all_method)
+        let set_from_map = build_from_map_setter(def.fields,def)
+        setter_getter_list.unshift(set_from_map)
+        //
+        setters_getters = setter_getter_list.join("\n")
 
         switch ( target_runner ) {
             case "node" : {
-                def_lines = node_style_output(type_name,fields,setters_getters,def)
+                def_lines = node_style_output(type_name,fields,setters_getters,checker_setup,def)
                 break;
             }
             case "module" : {
-                def_lines = module_style_output(type_name,fields,setters_getters,def)
+                def_lines = module_style_output(type_name,fields,setters_getters,checker_setup,def)
                 break;
             }
             default: {
