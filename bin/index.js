@@ -33,14 +33,21 @@ async function my_main_prog() {
     const usage = "\nUsage: dfon2l <dfon file> Type definition file";
 
     const options = yargs  
-        .usage(usage)  
+        .usage(usage)
         .option("j", { alias:"javascript", describe: "Translate to javascript.", type: "boolean", demandOption: false })                                                                                                    
+        .option("m", { alias:"module", describe: "Output module format.", type: "boolean", demandOption: false })                                                                                                    
         .help(true)  
         .argv;
 
     if ( (yargs.argv.j == true) || (yargs.argv.javascript == true) ){  
         let file = yargs.argv._[0];
-        out_js.output_file(file)
+        //
+        let target = "node"
+        if ( (yargs.argv.m == true) || (yargs.argv.module == true) ) {
+            target = "module"
+        }
+        //
+        out_js.output_file(file,target)
         return
     }
 
