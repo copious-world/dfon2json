@@ -168,7 +168,7 @@ function build_all_fields_setter(fields,def) {
     let field_list_list = Object.keys(fields)
     let field_list = field_list_list.join(",")
     let field_sets_list = field_list_list.map(fld => {
-        let checker = `\t\tif ( this.type_check('${fld}',fld) ) { `
+        let checker = `\t\tif ( this.type_check('${fld}',${fld}) ) { `
         let setter = `this._${fld} = ${fld} }`
         return (checker + setter)
     })
