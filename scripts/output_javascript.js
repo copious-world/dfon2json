@@ -3,7 +3,6 @@ const fs = require('fs')
 const path = require('path')
 
 
-
 const targets_OK = ['node', "module", "browser"]
 
 
@@ -57,7 +56,9 @@ ${exporter}
     } else {
         let inherit_class = capitalizeFirstLetter(def.inherit)
         //
-        let importer = `const ${inherit_class} = require('${def.inherit}')`
+        let remote_or_local = ""
+        if ( !(def.parent_remote) ) remote_or_local = "./"
+        let importer = `const {${inherit_class}} = require('${remote_or_local}${def.inherit}')`
 
         def_lines = 
 `
@@ -92,17 +93,16 @@ function module_style_output(type_name,fields,setters_getters,checker_setup,def)
         this._checkers = {}
         ${fields}
         //
-        ${checker_setup}
+${checker_setup}
     }
     //
     ${setters_getters}
 }
-${exporter}
 `
     } else {
         let inherit_class = capitalizeFirstLetter(def.inherit)
         //
-        let importer = `import ${inherit_class} from '${def.inherit}.mjs'`
+        let importer = `import {${inherit_class}} from './${def.inherit}.mjs'`
 
         def_lines = 
 `
@@ -113,7 +113,7 @@ export class ${type_name} extends ${inherit_class} {
         super()
         ${fields}
         //
-        ${checker_setup}
+${checker_setup}
     }
     //
     ${setters_getters}
