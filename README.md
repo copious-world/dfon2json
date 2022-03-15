@@ -9,7 +9,7 @@ The code in this repository can be installed with global scope by means of `npm 
 **Example:**
 
 ```
-dfon2l def-link-package.dfon
+dfon2l def-link-meta.dfon
 ```
 
 The above command tells the program to read the **dfon** file and output its contents in the **JSON** format to files in a cusomtized directory. The user may customize which directory by editing a configuration file in the director of operation.
@@ -28,7 +28,7 @@ In order to tranlate the JSON type formats into a supported language, invoke `df
 **Example:**
 
 ```
-dfon2l -j defs/def-link_package.json
+dfon2l -j defs/def-link_meta.json
 
 ```
 
@@ -46,7 +46,7 @@ dfon2l -j defs/def-link_package.json
 
 ```
 {
-	"typename" : "link_package",
+	"typename" : "link_meta",
 	"fields" : {
 	    "presentation" : "<string|<media-specifier>>",
 	    "links" : ["<string|<URL>>"],
@@ -63,7 +63,7 @@ Translates to the following:
 ```
 const Blog_type = require('blog_type')
 //
-class Link_package extends Blog_type {
+class Link_meta extends Blog_type {
     constructor() {
         super()
         this.presentation = ""
@@ -73,7 +73,7 @@ class Link_package extends Blog_type {
     }
 }
 //
-module.exports.Link_package = Link_package
+module.exports.Link_meta = Link_meta
 
 ```
 
@@ -110,13 +110,13 @@ Top level fields control the type definition. Nested blocks fields define the ty
 Here is an example:
 
 ```
-Def:> file(def-${typename})       // def-link_package.json
-typename : link_package
+Def:> file(def-${typename})       // def-link_meta.json
+typename : link_meta
 fields : #{
     presentation : <string|<media-specifier>>
     links : [<string|<URL>>]
-    link_map : { <token> : <string|<URL>> }             // A token provides an binding hint... instantiators use for injesting a link package
-    reverse_link_map : { <string|<URL>> : <token> }     // link package managers may search for a token in a binding given a link as a key...
+    link_map : { <token> : <string|<URL>> }             // A token provides an binding hint... instantiators use for injesting a link meta
+    reverse_link_map : { <string|<URL>> : <token> }     // link meta managers may search for a token in a binding given a link as a key...
 }
 inherit : blog_type
 role : impl
@@ -125,7 +125,7 @@ role : impl
 
 The first line sets a format for the output file name.
 
-The next line, the first top level field, names the type. This type is named `link_package`.
+The next line, the first top level field, names the type. This type is named `link_meta`.
 
 The second top level field (line 3) has a nested block as its value. These are the **fields** that will occur in a final language. The nested fields have a peculiar syntax which is carried through to the target language generation.
 
